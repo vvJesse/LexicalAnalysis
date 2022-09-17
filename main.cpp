@@ -15,6 +15,7 @@ set<string> set_of_valid_symbols({"+", "-", "*", ";", ",", "(", ")", "{", "}", "
 set<char> set_of_valid_symbols_c({'+', '-', '*', ';', ',', '(', ')', '{', '}', '>', '<', '=', '!', '\\'});
 // define type identifier num
 
+//Warning:(12, 13) Clang-Tidy: Initialization of 'set_of_restricted_words' with static storage duration may throw an exception that cannot be caught
 
 void get_map_of_type(){
     int p = 1;
@@ -44,6 +45,7 @@ int main() {
 //    for(auto & i : map_of_type)
 //        cout << i.first << "------------>" << i.second << endl;
     NFA nfa;
+
 
     return 0;
 }
