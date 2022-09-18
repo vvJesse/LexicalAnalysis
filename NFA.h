@@ -3,6 +3,11 @@
 //
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <cctype>
+#include <set>
+#include <map>
 #include <vector>
 
 #ifndef LEXICALANALYSIS_NFA_H
@@ -18,8 +23,9 @@
 class node{
 public:
     std::string input[MAX_NODE];
-    node* next[MAX_NODE];
+    int next[MAX_NODE];
     int state_last_point;
+    int is_z;
 
     node();
 };
@@ -27,11 +33,14 @@ public:
 
 class NFA {
 public:
+    std::map<int, std::string> map_of_type;
     std::vector<node> node_set;
     std::vector<node> z_set;
     NFA();
-    int runs_NFA(std::string &buf);
 
+    int runs_NFA(std::string &buf,  int cur_state, int length);
+    void get_map_of_type();
 };
 
-void void_set_NFA();
+
+
