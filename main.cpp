@@ -13,5 +13,6 @@ int main() {
     lex.set_map();
     string filename = "hhh.txt";
     lex.run_DFA(filename);
+    system("pause");
     return 0;
 }

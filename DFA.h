@@ -34,9 +34,11 @@ public:
 class DFA {
 public:
     std::vector<node> set_of_node;
+    std::map<std::string, int> out_type_map;
     std::map<char, int> map_of_char;
     int judge_a_word(std::string buf);
     int find_end(const std::string& buf, int cur_state, int matched_length);
+    int out_type(std::string &buf);
     void set_all_nodes();
     void set_map();
     void run_DFA(std::string &filename);

@@ -5,7 +5,8 @@
 
 using namespace std;
 
-node::node(std::string str, std::vector<string> &vec, std::vector<int> &n_vec, std::vector<node> &set_of_node) {
+node::node(std::string str, std::vector<string> &vec,
+        std::vector<int> &n_vec,std::vector<node> &set_of_node) {
     name = std::move(str);
     state_last_point = vec.size();
     for(int i = 0; i < state_last_point; i++){
@@ -390,7 +391,8 @@ int DFA::find_end(const string& buf, int cur_state, int matched_length){
     }
     int unknown_bug2 = cur_state;
     for(int i = 0; i < set_of_node[unknown_bug2].state_last_point; i++){
-        if(match_word(set_of_node[unknown_bug2].input[i], buf.substr(matched_length, 1))){
+        if(match_word(set_of_node[unknown_bug2].input[i],
+                buf.substr(matched_length, 1))){
             setbuf(stdout, nullptr);
             int unknown_bug1 =  set_of_node.at(cur_state).next[i];
             return find_end(buf, unknown_bug1, matched_length+1);
@@ -401,25 +403,47 @@ int DFA::find_end(const string& buf, int cur_state, int matched_length){
 }
 
 
+
+int DFA::out_type(string &buf){
+
+    if(out_type_map.find(buf)!=out_type_map.end()){
+        return out_type_map[buf];
+    } else{
+        if(isalpha(buf[0])){
+            return 30;
+        } else if(isdigit(buf[0]))
+            return 31;
+    }
+    return -1;
+
+}
+
+
 int DFA::judge_a_word(string buf){
     int m_len = 0;
     if(isalpha(buf[0])){
         int cur = 30;
+        bool flag = false;
         if(buf[0]=='v'||buf[0]=='i'||buf[0]=='f'||
                 buf[0]=='d'||buf[0]=='e'||buf[0]=='w'){
             cur = map_of_char[buf[0]];
+            flag = true;
         }
         m_len = find_end(buf, cur, 1);
 
         if(m_len != buf.length()){
             if(is_symbol(buf[m_len])) {
-                cout << buf.substr(0, m_len) << " is identified" << endl;
+                if(flag)
+                    cout << "(" << buf.substr(0, m_len) << ", " <<
+                    out_type_map[buf.substr(0, m_len)] << ")" << endl;
+                else
+                    cout << "(\"" << buf.substr(0, m_len) << "\", 42)" << endl;
                 judge_a_word(buf.substr(m_len, buf.length()-m_len));
             } else{
                 cout << buf << " can not be resolved." << endl;
             }
         }else{
-            cout << buf << " is identified." << endl;
+            cout << "(\"" << buf << "\", 42)" << endl;
         }
 
     }else if(isdigit(buf[0])){
@@ -427,21 +451,22 @@ int DFA::judge_a_word(string buf){
         m_len = find_end(buf, 32, 1);
         if(m_len!=buf.size()){
             if(is_symbol(buf[m_len])){
-                cout << buf.substr(0, m_len) << " is identified." << endl;
+                cout << "(\"" << buf.substr(0, m_len) << "\", 43)" << endl;
                 judge_a_word(buf.substr(m_len, buf.length()-m_len));
             } else{
                 cout << buf << "can not be resolved." << endl;
             }
         } else{
-            cout << buf << " is identified." << endl;
+            cout << "(\"" << buf << "\", 43)" << endl;
         }
     }else if(is_symbol(buf[0])){
         m_len = find_end(buf, map_of_char[buf[0]], 1);
         if(m_len != buf.length()){
-            cout << buf.substr(0, m_len) << " is identified." << endl;
+            cout << "(\"" << buf.substr(0, m_len) << "\", " <<
+            out_type_map[buf.substr(0, m_len)] << ")" << endl;
             judge_a_word(buf.substr(m_len, buf.size()-m_len));
         }else{
-            cout << buf << " is identified" << endl;
+            cout << "(\"" << buf << "\", " << out_type_map[buf] << ")" << endl;
         }
 
     } else{
@@ -469,6 +494,7 @@ void DFA::run_DFA(std::string& filename) {
 //    judge_a_word("void>=1>1");
 
 }
+
 
 
 void DFA::set_map() {
@@ -499,6 +525,53 @@ void DFA::set_map() {
     map_of_char['"'] = 65;
     map_of_char['\''] = 66;
 //    map_of_char['']
+
+
+    int a = 1;
+    out_type_map["void"] = a++;
+    out_type_map["if"] = a++;
+    out_type_map["int"] = a++;
+    out_type_map["for"] = a++;
+    out_type_map["float"] = a++;
+    out_type_map["double"] = a++;
+    out_type_map["else"] = a++;
+    out_type_map["while"] = a++;
+    out_type_map["+"] = a++;
+    out_type_map["++"] = a++;
+    out_type_map["+="] = a++;
+    out_type_map["-"] = a++;
+    out_type_map["--"] = a++;
+    out_type_map["-="] = a++;
+    out_type_map["*"] = a++;
+    out_type_map["*="] = a++;
+    out_type_map["="] = a++;
+    out_type_map[";"] = a++;
+    out_type_map[","] = a++;
+    out_type_map["("] = a++;
+    out_type_map[")"] = a++;
+    out_type_map["{"] = a++;
+    out_type_map["}"] = a++;
+    out_type_map[">"] = a++;
+    out_type_map[">="] = a++;
+    out_type_map[">>"] = a++;
+    out_type_map["<"] = a++;
+    out_type_map["<="] = a++;
+    out_type_map["<<"] = a++;
+    out_type_map["<>"] = a++;
+    out_type_map["!"] = a++;
+    out_type_map["!="] = a++;
+    out_type_map["/"] = a++;
+    out_type_map["/*"] = a++;
+    out_type_map["/="] = a++;
+    out_type_map["="] = a++;
+    out_type_map["=="] = a++;
+    out_type_map["&"] = a++;
+    out_type_map["&&"] = a++;
+    out_type_map["|"] = a++;
+    out_type_map["||"] = a++;
+    out_type_map["\""] = a++;
+    out_type_map["'"] = a++;
+
 }
 
 
