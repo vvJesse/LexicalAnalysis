@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "NFA.h"
+#include "DFA.h"
 #define MAX_IDENTIFIER 32
 using namespace std;
 
@@ -8,20 +8,10 @@ using namespace std;
 
 int main() {
 
-    //open file
-
-    //Scanner, and buff
-
-    NFA nfa;
-    string test = "oi>df";
-    string test2 = "oid2";
-    string buf = "oid";
-    node* o_begin = &nfa.node_set.at(1);
-    nfa.get_map_of_type();
-//    for(const auto & i : nfa.map_of_type){
-//        cout << i.first << "  " << i.second << endl;
-//    }
-    cout << nfa.runs_NFA(test, 1, 0);
-
+    DFA lex;
+    lex.set_all_nodes();
+    lex.set_map();
+    string filename = "hhh.txt";
+    lex.run_DFA(filename);
     return 0;
 }

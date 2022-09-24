@@ -1,1 +1,5 @@
-sdfjhkasdjfhkjh
+int main(){
+    double a = 1 + 1;
+    printf("Hello");
+    return 0;
+}

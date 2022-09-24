@@ -3,4 +3,4 @@ project(LexicalAnalysis)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(LexicalAnalysis main.cpp NFA.cpp NFA.h Scanner.cpp Scanner.h)
+add_executable(LexicalAnalysis main.cpp DFA.cpp DFA.h Scanner.cpp Scanner.h)

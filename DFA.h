@@ -22,24 +22,25 @@
 
 class node{
 public:
+    std::string name;
     std::string input[MAX_NODE];
     int next[MAX_NODE];
     int state_last_point;
-    int is_z;
 
-    node();
+    node(std::string str, std::vector<std::string> &vec, std::vector<int> &n_vec, std::vector<node> &set_of_node);
+
 };
 
-
-class NFA {
+class DFA {
 public:
-    std::map<int, std::string> map_of_type;
-    std::vector<node> node_set;
-    std::vector<node> z_set;
-    NFA();
+    std::vector<node> set_of_node;
+    std::map<char, int> map_of_char;
+    int judge_a_word(std::string buf);
+    int find_end(const std::string& buf, int cur_state, int matched_length);
+    void set_all_nodes();
+    void set_map();
+    void run_DFA(std::string &filename);
 
-    int runs_NFA(std::string &buf,  int cur_state, int length);
-    void get_map_of_type();
 };
 
 
