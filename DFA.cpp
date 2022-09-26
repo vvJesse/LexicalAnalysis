@@ -345,6 +345,14 @@ void DFA::set_all_nodes(){
     node quotation_single("'", vec, n_vec,set_of_node);
     set_of_node.emplace_back(quotation_single);
 
+    t++;
+    node left_brack("[", vec, n_vec,set_of_node);
+    set_of_node.emplace_back(left_brack);
+
+    t++;
+    node right_brack("]", vec, n_vec,set_of_node);
+    set_of_node.emplace_back(right_brack);
+
     /*
      *  这部分用来测试！！！！！！！
      */
@@ -365,10 +373,10 @@ void DFA::set_all_nodes(){
 }
 
 
-set<char> symbols = {'+','-','*',';',',','(',')','{','}','<','>','=','!','/','&','|','"','\''};
+set<char> symbols = {'+','-','*',';',',','(',')','{','}','<','>','=','!','/','&','|','"','\'','[',']'};
 
 
-bool is_symbol(char& str){
+bool is_valid_symbol(char& str){
     return symbols.find(str) != symbols.end();
 }
 
@@ -384,117 +392,161 @@ bool match_word(const string& require, string provide){
 
 
 int DFA::find_end(const string& buf, int cur_state, int matched_length){
-    if(matched_length == buf.length()){
-//        cout << buf << " is identified." << endl;
-//        cout << "current state:" << cur_state << ":" << set_of_node.at(cur_state).name << endl;
+
+    if(matched_length == buf.length())
+    {
         return matched_length;
     }
+
     int unknown_bug2 = cur_state;
-    for(int i = 0; i < set_of_node[unknown_bug2].state_last_point; i++){
-        if(match_word(set_of_node[unknown_bug2].input[i],
-                buf.substr(matched_length, 1))){
+    for(int i = 0; i < set_of_node[unknown_bug2].state_last_point; i++)
+    {
+
+        if(match_word(set_of_node[unknown_bug2].input[i],buf.substr(matched_length, 1)))
+        {
             setbuf(stdout, nullptr);
             int unknown_bug1 =  set_of_node.at(cur_state).next[i];
             return find_end(buf, unknown_bug1, matched_length+1);
         }
+
     }
 
     return matched_length;
 }
 
 
-
-int DFA::out_type(string &buf){
-
-    if(out_type_map.find(buf)!=out_type_map.end()){
-        return out_type_map[buf];
-    } else{
-        if(isalpha(buf[0])){
-            return 30;
-        } else if(isdigit(buf[0]))
-            return 31;
+void DFA::out_type(string &buf, int type, ofstream& out){
+    if(!type){
+//        cout << "(\"" << buf << "\", " << out_type_map[buf] << ")" << endl;
+        out << "(\"" << buf << "\", " << out_type_map[buf] << ")" << endl;
+    }else{
+//        cout << "(\"" << buf << "\", " << type << ")" << endl;
+        out << "(\"" << buf << "\", " << type << ")" << endl;
     }
-    return -1;
-
 }
 
 
-int DFA::judge_a_word(string buf){
+int DFA::judge_a_word(string buf, ofstream &out){
+
+    //matched_length: 已配对的长度
     int m_len = 0;
-    if(isalpha(buf[0])){
-        int cur = 30;
-        bool flag = false;
-        if(buf[0]=='v'||buf[0]=='i'||buf[0]=='f'||
-                buf[0]=='d'||buf[0]=='e'||buf[0]=='w'){
+
+    //首位为字母
+    //是标识符或保留字
+    if(isalpha(buf[0]))
+    {
+
+        //默认标识符为开始节点
+        int cur = IDENTIFIER_INDEX;
+        bool restricted_word_flag = false;
+
+        //判断是否可能是保留字
+        if(buf[0]=='v'||buf[0]=='i'||buf[0]=='f'||buf[0]=='d'||buf[0]=='e'||buf[0]=='w')
+        {
             cur = map_of_char[buf[0]];
-            flag = true;
+            restricted_word_flag = true;
         }
+
+        // 遍历子树，求可配对的最大长度
         m_len = find_end(buf, cur, 1);
 
-        if(m_len != buf.length()){
-            if(is_symbol(buf[m_len])) {
-                if(flag)
-                    cout << "(" << buf.substr(0, m_len) << ", " <<
-                    out_type_map[buf.substr(0, m_len)] << ")" << endl;
-                else
-                    cout << "(\"" << buf.substr(0, m_len) << "\", 42)" << endl;
-                judge_a_word(buf.substr(m_len, buf.length()-m_len));
-            } else{
-                cout << buf << " can not be resolved." << endl;
+        if(m_len > MAX_IDENTIFIER_LENGTH)
+        {
+//            cout << "Identifier should be no more than 32 characters." << endl;
+            out << "Identifier should be no more than 32 characters." << endl;
+        } else{
+
+            // 未配对部分处理
+            if (m_len != buf.length())
+            {
+                // 理论上，未配对部分不可能以字母或数字开头
+                // 因此这里只需看是否是正确符号
+                if (is_valid_symbol(buf[m_len]))
+                {
+                    if (restricted_word_flag)
+                    {
+                        string tmp = buf.substr(0, m_len);
+                        out_type(tmp, 0, out);
+                    }
+                    else{
+                        string tmp = buf.substr(0, m_len);
+                        out_type(tmp, IDENTIFIER_OUT_TYPE, out);
+                    }
+                    judge_a_word(buf.substr(m_len, buf.length() - m_len), out);
+                } else {
+//                    cout << buf << " can not be resolved." << endl;
+                    out << buf << " can not be resolved." << endl;
+                }
+            } else {
+                out_type(buf, IDENTIFIER_OUT_TYPE, out);
             }
-        }else{
-            cout << "(\"" << buf << "\", 42)" << endl;
+
         }
+    }else if(isdigit(buf[0]))
+    {
 
-    }else if(isdigit(buf[0])){
+        m_len = find_end(buf, INTEGER_INDEX, 1);
 
-        m_len = find_end(buf, 32, 1);
-        if(m_len!=buf.size()){
-            if(is_symbol(buf[m_len])){
-                cout << "(\"" << buf.substr(0, m_len) << "\", 43)" << endl;
-                judge_a_word(buf.substr(m_len, buf.length()-m_len));
+        if(m_len!=buf.size())
+        {
+            if(is_valid_symbol(buf[m_len]))
+            {
+                string tmp = buf.substr(0, m_len);
+                out_type(tmp, INTEGER_OUT_TYPE, out);
+                judge_a_word(buf.substr(m_len, buf.length()-m_len), out);
+
             } else{
-                cout << buf << "can not be resolved." << endl;
+//                cout << buf << "can not be resolved." << endl;
+                out << buf << "can not be resolved." << endl;
             }
         } else{
-            cout << "(\"" << buf << "\", 43)" << endl;
+            out_type(buf, INTEGER_OUT_TYPE, out);
         }
-    }else if(is_symbol(buf[0])){
+
+    }else if(is_valid_symbol(buf[0]))
+    {
         m_len = find_end(buf, map_of_char[buf[0]], 1);
-        if(m_len != buf.length()){
-            cout << "(\"" << buf.substr(0, m_len) << "\", " <<
-            out_type_map[buf.substr(0, m_len)] << ")" << endl;
-            judge_a_word(buf.substr(m_len, buf.size()-m_len));
+
+        if(m_len != buf.length())
+        {
+            string tmp = buf.substr(0, m_len);
+            out_type(tmp, 0, out);
+            judge_a_word(buf.substr(m_len, buf.size()-m_len), out);
+
         }else{
-            cout << "(\"" << buf << "\", " << out_type_map[buf] << ")" << endl;
+            out_type(buf, 0, out);
         }
 
     } else{
-        cout << "invalid character detected: " << buf[0] << " from " << buf << endl;
+//        cout << "Invalid character detected: " << buf[0] << " from " << buf << endl;
+        out << "Invalid character detected: " << buf[0] << " from " << buf << endl;
     }
-//    cout << buf.substr(0, m_len) << " is identified. but " <<
-//         buf.substr(m_len, buf.length()-m_len) << " is unresolved.";
+
 }
 
 
 void DFA::run_DFA(std::string& filename) {
     ifstream fin;
     fin.open(filename, ios::in);
-
-    if(!fin.is_open()){
+    if(!fin.is_open())
+    {
         cout << "file_open_error." << endl;
         return;
     }
 
     string buf;
-    while(fin >> buf){
-        judge_a_word(buf);
+    ofstream fout;
+    fout.open(filename.substr(0, filename.length()-4)+"_m.txt", ios::out);
+
+    while(fin >> buf)
+    {
+        judge_a_word(buf, fout);
     }
 
+    fin.close();
 //    judge_a_word("void>=1>1");
 
 }
-
 
 
 void DFA::set_map() {
@@ -524,8 +576,8 @@ void DFA::set_map() {
     map_of_char['|'] = 63;
     map_of_char['"'] = 65;
     map_of_char['\''] = 66;
-//    map_of_char['']
-
+    map_of_char['['] = 67;
+    map_of_char[']'] = 68;
 
     int a = 1;
     out_type_map["void"] = a++;
@@ -571,7 +623,204 @@ void DFA::set_map() {
     out_type_map["||"] = a++;
     out_type_map["\""] = a++;
     out_type_map["'"] = a++;
+    out_type_map["["] = a++;
+    out_type_map["]"] = a;
 
 }
 
 
+int Check(string readline)
+{
+    //非空串判断
+    for(int n=0;n<readline.length();n++)
+    {
+        //如果有元素不是空格或者回车，该串非空
+        if(readline[n]!=9&&readline[n]!=32&&readline[n]!=13)
+        {
+            //cout<<readline+"非空"<<endl;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
+int LineProcess(string readline,int &readpos,int &startpos,int &endpos,int& status, string &outname)
+{
+    //写入文件
+    fstream out;
+    out.open(outname, fstream::out | ios_base::app);
+
+    //status 1正常读取 2同行待匹配 3异行待匹配
+    int j=readline.length();
+    int flag=0;//没有注释
+    //cout<<"当前状态："<<status<<" 当前行："<<readline<<endl;
+    //cout<<"当前行："<<readline<<"当前读取位置："<<readpos<<readline[readpos]<<endl;
+    //cout<<" 当前行："<<readline<<endl;
+
+    //跳过空行
+    if(0==j)
+    {
+        //cout<<"空行"<<endl;
+        return 0;
+    }
+
+    //逐字符读取
+    for(int n=readpos;n<j;n++)
+    {
+        //cout<<"当前状态："<<status<<"当前读取位置："<<n<<endl;
+        //cout<<"进入循环"<<endl;
+        //cout<<"当前行："<<readline<<"当前读取位置："<<readline[n]<<endl;
+        //读取到//
+        if(readline[n]=='/'&&readline[n+1]=='/')
+        {
+            //cout<<"当前行："<<readline<<"当前读取位置："<<readline[n]<<endl;
+            startpos=n;
+            //输出/之前的内容
+            //cout<<"//输出："<<endl;
+            //cout<<"//前注释长度："<<readline.substr(0,n).length()<<endl;
+            //输出非空字符串
+            if(Check(readline.substr(0,n)))
+            {
+                out<<readline.substr(0,n)<<endl;
+                cout<<readline.substr(0,n)<<endl;
+            }
+            //读取下一行
+            readpos=0;
+            return 0;
+        }
+        //读取到/*
+        if(readline[n]=='/'&&readline[n+1]=='*')
+        {
+            //cout<<"当前行："<<readline<<"当前读取位置："<<readline[n]<<endl;
+            //标记
+            //startpos=n;
+            //输出/之前的内容,不换行,一次只输出一部分
+            //cout<<"/*输出："<<endl;
+            out<<readline.substr(startpos,n-startpos);//0，n
+            cout<<readline.substr(startpos,n-startpos);//n-startpos
+            //暂不换行
+            //状态变更为同行待匹配
+            status=2;
+            //标记读取位置为*的下一位
+            readpos=n+2;
+            //继续读本行
+            return 1;
+
+            //old
+            //cout<<"发现注释/*："<<readline<<endl;
+            //cout<<startpos<<readline[startpos]<<endpos<<readline[endpos]<<endl;
+            //system("pause");
+            //break;
+        }
+        //读取到*/
+        if(readline[n]=='*'&&readline[n+1]=='/')
+        {
+            //cout<<"readpos:"<<readpos<<endl;
+
+            //恢复正常状态
+            status=1;
+
+            //标记readpos为/的后一位
+            if(n<j-2)
+            {
+                //如果还有，从此开始输出
+                startpos=n+2;
+                readpos=n+2;
+                //cout<<"readpos:"<<readpos<<endl;
+                //继续读本行
+                return 1;
+            }
+            else
+            {
+                //读取下一行
+                return 0;
+            }
+
+            //if(n!=j-2)return 1;
+            //else if(j-2==n)return 0;//读取下一行
+
+            //old
+            //flag=3;
+            //endpos=n+1;
+            //cout<<"发现注释*/："<<readline<<endl;
+            //cout<<startpos<<readline[startpos]<<endpos<<readline[endpos]<<endl;
+            //system("pause");
+            //想继续读第二个注释，就不能break
+            //break;
+        }
+        //读取到本行末尾
+        if(n==j-1)//▲出错点 n==j进入死循环
+        {
+            //cout<<"读取到本行末尾"<<endl;
+            //cout<<"当前状态："<<status<<endl;
+
+            //如果同行待匹配没匹配到，就变成异行待匹配
+            if(2==status)
+            {
+                //cout<<"同行待匹配没匹配到，变成异行待匹配 "<<endl;
+                status=3;
+                //读取下一行
+                readpos=0;
+                return 0;
+            }
+            else if(3==status) //▲出错点 status=3 修改了变量的值
+            {
+                //cout<<""<<endl;
+                //cout<<"是异行待匹配状态，现在读取下一行"<<endl;
+                //读取下一行
+                readpos=0;
+                return 0;
+            }
+            else if(1==status)
+            {
+                //正常状态
+                //输出本行未输出过的字符，换行
+                //cout<<"是正常状态，输出本行，换行，再读取下一行"<<endl;
+                out<<readline.substr(startpos)<<endl;
+                cout<<readline.substr(startpos)<<endl;
+                //读取下一行
+                readpos=0;
+                return 0;
+            }
+        }
+    }
+    //system("pause");
+}
+
+
+string DFA::clear_annotation(string &name)
+{
+    //读入 ：过滤单行的注释，将注释内容全部截取
+    fstream in;
+    in.open(name,ios::in);
+
+    //写入文件
+    string outname = name.substr(0, name.length()-4) + "_m.txt";
+    fstream out;
+    out.open(outname, fstream::out | ios_base::trunc);
+
+    int n=0;//当前读取位置
+    int endpos=0; //用后记得初始化
+    int startpos=0;
+    int status=1;
+    int readpos=0;
+    string readline;
+    while (getline(in, readline))
+    {
+        //cout<<"读取下一行"<<endl;
+        int res=0;
+        startpos=0;
+        //读取下一行0，继续读本行1
+        while(res=LineProcess(readline,readpos,startpos,endpos,status, outname))
+        {
+            //cout<<"继续读本行"<<endl;
+            res=0;
+            //system("pause");
+        }
+    }
+    in.close();
+    out.close();
+    return outname;
+
+}

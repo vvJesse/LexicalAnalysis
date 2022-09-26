@@ -13,9 +13,13 @@
 #ifndef LEXICALANALYSIS_NFA_H
 #define LEXICALANALYSIS_NFA_H
 
-
+#define MAX_IDENTIFIER_LENGTH 32
 #define MAX_NODE 5
-#define MAX_IDENTIFIER 32
+#define IDENTIFIER_INDEX 30
+#define INTEGER_INDEX 32
+#define IDENTIFIER_OUT_TYPE 44
+#define INTEGER_OUT_TYPE 45
+
 #endif //LEXICALANALYSIS_NFA_H
 
 
@@ -36,12 +40,13 @@ public:
     std::vector<node> set_of_node;
     std::map<std::string, int> out_type_map;
     std::map<char, int> map_of_char;
-    int judge_a_word(std::string buf);
+    int judge_a_word(std::string buf, std::ofstream &out);
     int find_end(const std::string& buf, int cur_state, int matched_length);
-    int out_type(std::string &buf);
+    void out_type(std::string &buf, int type, std::ofstream &out);
     void set_all_nodes();
     void set_map();
     void run_DFA(std::string &filename);
+    std::string clear_annotation(std::string &filename);
 
 };
 
